@@ -1,5 +1,5 @@
 
-#library(MASS)
+
 ###here are the linear regression functions which will produce the score vector and the information matrix.  When we only need portions of the score and info
 #we will subset it within the larger function.  These functions will always produce the entire score and information.
 

@@ -1,6 +1,4 @@
-2
-# library(MASS)
-#' @import MASS
+
 
 log.reg.score.fxn <- function(X, y, beta){
   #Calculating fitted probabilities based on model fit
