@@ -1,6 +1,6 @@
-2
+
 # library(MASS)
-#' @import MASS
+
 
 log.reg.score.fxn <- function(X, y, beta){
   #Calculating fitted probabilities based on model fit
@@ -382,8 +382,29 @@ return(c(Wald.pval.m123vmnull,
 #' @return An iter x 14 data.frame.  Each row of the data.frame represents the results from a single iteration.
 #' @export
 #'
-#' @examples
-do_log_reg_sim <- function(iter,
+#' @examples 
+#' #' Model containing parameters /beta_0, /beta_1, /beta_2 and /beta_3 is over-specified because the true value of /beta_3 is zero.
+#' #' over_specified <- do_logistic_reg_sim(
+#'   iter = 10, 
+#'   n = 500, 
+#'   B = 50,
+#'   true_beta_vec = c(0.2, -0.25, 0.30, 0, 0))
+#' Model containing parameters /beta_0, /beta_1, /beta_2 and /beta_3 is properly-specified.
+#' properly_specified <-
+#'   do_logistic_reg_sim(iter = 10,
+#'                       n = 500,
+#'                       B = 50,
+#'                       true_beta_vec = c(0.2, -0.25, 0.30, -0.30, 0))
+
+
+#'Model containing parameters /beta_0, /beta_1, /beta_2 and /beta_3 is under-specified because true value of /beta_4 is nonzero.  
+#' under_specified <- 
+#'   do_logistic_reg_sim(iter = 10,
+#'                       n = 500, 
+#'                       B = 50,
+#'                       true_beta_vec = c(0.2, -0.25, 0.30, -0.30, -0.20))
+
+do_logistic_reg_sim <- function(iter,
                            n,
                            B,
                            true_beta_vec){
@@ -421,9 +442,11 @@ data.frame(
 
 }
 
-logregtest <- log.reg.fxn(iter = 25, n = 500, B = 500, true.beta0 = 0, true.beta1 = 0 , true.beta2 = 0, true.beta3 = 0, true.beta4 = 0)
-plotting.fxn(dataset = logregtest, maintitle = "log reg true null n500")
 
 
-logregtest2 <- log.reg.fxn(iter = 50, n = 1000, B = 200, true.beta0 = 0, true.beta1 = 0 , true.beta2 = 0, true.beta3 = 0, true.beta4 = 0)
-plotting.fxn(dataset = logregtest2, maintitle = "log reg bigger n true null")
+
+#plotting.fxn(dataset = logregtest, maintitle = "log reg true null n500")
+
+
+# logregtest2 <- log.reg.fxn(iter = 50, n = 1000, B = 200, true.beta0 = 0, true.beta1 = 0 , true.beta2 = 0, true.beta3 = 0, true.beta4 = 0)
+# plotting.fxn(dataset = logregtest2, maintitle = "log reg bigger n true null")

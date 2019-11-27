@@ -9,3 +9,12 @@ Description: More about what it does (maybe more than one line)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
+RoxygenNote: 6.1.1
+Collate: 
+    'MASS'
+    '2017 04 14 final logistic regression simulation function.R'
+    '2017 04 27 final linea regression simulation function.R'
+    '2017 07 11 CCC calculating function.R'
+    '2017 07 11 linear and log reg sims to run.R'
+    'git commands.R'
+    'hello.R'
