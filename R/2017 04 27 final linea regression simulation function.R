@@ -371,93 +371,154 @@ single.iter.lin.reg.fxn <- function(n =n, B = B, true.beta0 = true.beta0, true.b
 
 
 
-###This is the logistic regression function that does not work in parallel.  I could not figure out how to make this work in parallel so I will just have it run sequentially.
-lin.reg.fxn <- function(iter, n, B, true.beta0, true.beta1, true.beta2, true.beta3, true.beta4, true.sig2, mnull.sig2){
+#'  The function which produced the BDCP logistic regression simulation study results.
+#'
+#' @param iter The number of iterations of the simuation to run.  For instance, if iter = 100, then the function will draw 100 separate samples, calculating the respective p-values and BDCPs for each of the 100 iterations.  iter controls the number of rows in the return data.frame.
+#' @param n The sample size for each of the iterations.
+#' @param B The number of bootstrap samples used to estimate each of the BDCPs.  Note that B bootstrap samples will be drawn for each of the iter iterations, so a total of iter * B total bootstrap samples will be drawn.
+#' @param true_beta_vec The vector of length 5 that controls the underlying data generating mechanism.  The true data-generating mechanism is of the form
+#' y_i | x_i ~ bernoulli(\theta_i), where log(\theta_i / (1 - \theta_i)) = \beta_0 + \beta_1x_1 + \beta_2x_2 + \beta_3x_3 + \beta_4x_4.  Importantly, \beta_4 is not included as a predictor in any of the specified models.  Thus, set \beta_4 to a nonzero value in order to test an underspecified null setting.  Specifically, the full null hypothesis tests H_0: \beta_0 = \beta_1 = \beta_2 = \beta_3 = 0 versus the general alternative.  THe partial null hypothesis tests H_0: \beta_2 = \beta_3 = 0, letting \beta_0 and \beta_1 be maximized.
+#'
+#' @return An iter x 14 data.frame.  Each row of the data.frame represents the results from a single iteration.
+#' @export
+#'
+#' @examples
+#' #' Model containing parameters /beta_0, /beta_1, /beta_2 and /beta_3
+#'  is over-specified because the true value of /beta_3 is zero.
+#'
+#' over_specified <- do_logistic_reg_sim(
+#'   iter = 10,
+#'   n = 500,
+#'   B = 50,
+#'   true_beta_vec = c(0.2, -0.25, 0.30, 0, 0))
+#'
+#'
+#' Model containing parameters /beta_0, /beta_1, /beta_2 and /beta_3
+#' is properly-specified.
+#'
+#' properly_specified <-
+#'   do_logistic_reg_sim(iter = 10,
+#'                       n = 500,
+#'                       B = 50,
+#'                       true_beta_vec = c(0.2, -0.25, 0.30, -0.30, 0))
 
+
+#'Model containing parameters /beta_0, /beta_1, /beta_2 and /beta_3
+#'is under-specified because true value of /beta_4 is nonzero.
+#'
+#' under_specified <-
+#'   do_logistic_reg_sim(iter = 10,
+#'                       n = 500,
+#'                       B = 50,
+#'                       true_beta_vec = c(0.2, -0.25, 0.30, -0.30, -0.20))
+#'
+#' @param iter The number of iterations of the simuation to run.  For instance, if iter = 100, then the function will draw 100 separate samples, calculating the respective p-values and BDCPs for each of the 100 iterations.  iter controls the number of rows in the return data.frame.
+#' @param n The sample size for each of the iterations.
+#' @param B The number of bootstrap samples used to estimate each of the BDCPs.  Note that B bootstrap samples will be drawn for each of the iter iterations, so a total of iter * B total bootstrap samples will be drawn.
+#' @param true_beta_vec The vector of length 5 that controls the underlying data generating mechanism.  The true data-generating mechanism is of the form
+#' y_i | x_i = \beta_0 + \beta_1x_1 + \beta_2x_2 + \beta_3x_3 + \beta_4x_4 + \epsilon_i, where \epsilon_i ~ N(0, true_sigma_squared).  Importantly, \beta_4 is not included as a predictor in any of the specified models.  Thus, set \beta_4 to a nonzero value in order to test an underspecified null setting.  Specifically, the full null hypothesis tests H_0: \beta_0 = \beta_1 = \beta_2 = \beta_3 = 0 versus the general alternative.  THe partial null hypothesis tests H_0: \beta_2 = \beta_3 = 0, letting \beta_0 and \beta_1 be maximized.
+#' @param true_sigma_squared The true value of sigma squared in the data-generating mechanism.  The data-generating mechanism is of the form
+#' y_i | x_i = \beta_0 + \beta_1x_1 + \beta_2x_2 + \beta_3x_3 + \beta_4x_4 + \epsilon_i, where \epsilon_i ~ N(0, true_sigma_squared).
+#' @param null_model_sigma_squared The assumed value of sigma squared under the
+#' null model.  Note that this is required because the null model should have no
+#' parameters to estimate.
+#' #' @return An iter x 14 data.frame.  Each row of the data.frame represents the results from a single iteration.
+#' @export
+do_linear_reg_sim <- function(iter,
+                              n,
+                              B,
+                              true_beta_vec,
+                              true_sigma_squared,
+                              null_model_sigma_squared){
+  
+  true.beta0 <- true_beta_vec[[1]]
+  true.beta1 <- true_beta_vec[[2]]
+  true.beta2 <- true_beta_vec[[3]]
+  true.beta3 <- true_beta_vec[[4]]
+  true.beta4 <- true_beta_vec[[5]]
+  true.sig2 <- true_sigma_squared
+  mnull.sig2 <- null_model_sigma_squared
+  
+  
   lin.reg.data <- matrix(data = NA, nrow = iter, ncol = 13)
   for(i in 1:iter){
     lin.reg.data[i,] <- single.iter.lin.reg.fxn(n = n, B = B, true.beta0 = true.beta0, true.beta1 = true.beta1, true.beta2 = true.beta2, true.beta3 = true.beta3
                                                 , true.beta4 = true.beta4, true.sig2 = true.sig2, mnull.sig2 = mnull.sig2)
   }
-
- iteration <- 1:iter
-
-  list.lin.reg.data <- data.frame("Wald.full.null.pval" = round(lin.reg.data[,1],5) ,
-                            "Wald.partial.null.pval" = round(lin.reg.data[,2],5) ,
-                            "score.full.null.pval" = round(lin.reg.data[,3],5),
-                            "score.partial.null.pval" = round(lin.reg.data[,4],5),
-                            "LRT.full.null.pval" = round(lin.reg.data[,5],5),
-                            "LRT.partial.null.pval" = round(lin.reg.data[,6],5) ,
-                            "Wald.full.null.disc.comparison.prob" = round(lin.reg.data[,7],5) ,
-                            "Wald.partial.null.disc.comparison" = round(lin.reg.data[,8],5) ,
-                            "score.full.null.disc.comparison.probs" = round(lin.reg.data[,9],5),
-                            "score.partial.null.disc.comparison"= round(lin.reg.data[,10],5),
-                            "KL.full.null.disc.comparison" = round(lin.reg.data[,11],5),
-                            "KL.partial.null.overall.disc.comparison" = round(lin.reg.data[,12],5),
-                            "KL.partial.null.para.int.overall.disc.comparison"= round(lin.reg.data[,13],5),
-                            "iteration" = iteration)
-
-  return(list.lin.reg.data)
-
+  
+  iteration <- 1:iter
+  
+  
+  
+  data.frame(
+    "wald_full_null_pval" = round(lin.reg.data[,1],5) ,
+    "wald_partial_null_pval" = round(lin.reg.data[,2],5) ,
+    "score_full_null_pval" = round(lin.reg.data[,3],5),
+    "score_partial_null_pval" = round(lin.reg.data[,4],5),
+    "lrt_full_null_pval" = round(lin.reg.data[,5],5),
+    "lrt_partial_null_pval" = round(lin.reg.data[,6],5) ,
+    "wald_full_null_bdcp" = round(lin.reg.data[,7],5) ,
+    "wald_partial_null_bdcp" = round(lin.reg.data[,8],5) ,
+    "score_full_null_bdcp" = round(lin.reg.data[,9],5),
+    "score_partial_null_bdcp"= round(lin.reg.data[,10],5),
+    "kl_full_null_bdcp" = round(lin.reg.data[,11],5),
+    "kl_partial_null_overall_bdcp" = round(lin.reg.data[,12],5),
+    "kl_partial_null_para_int_overall_bdcp"=
+      round(lin.reg.data[,13],5),
+    "iteration" = iteration)
+  
+  
 }
 
-linregtest <- lin.reg.fxn(iter = 10,
+linregtest <- do_linear_reg_sim(iter = 10,
                           n = 500,
                           B = 100,
-                          true.beta0 = 0,
-                          true.beta1 = 0,
-                          true.beta2 = 0,
-                          true.beta3 = 0,
-                          true.beta4 = 0,
-                          true.sig2 = 50,
-                          mnull.sig2 = 50)
+                          true_beta_vec = rep(0,5),
+                          true_sigma_squared = 50,
+                          null_model_sigma_squared = 60)
 
 
 
 
-##previous working directory was: "C:/Users/bnr/Documents"
-#I am saying this in case changing the working directory causes me some new unforeseen problems.
-getwd()
-setwd("C:/Users/bnr/Desktop/Dissertation Stuff/R programs/saved pvalues and DCPs")
-save(linregtest, file = 'C:/Users/bnr/Desktop/Dissertation Stuff/R programs/saved pvalues and DCPs/linregtruenull')
 
-plotting.fxn <- function(dataset, maintitle){
-
-par(mfrow = c(2,2), oma = c(0,0,3,0))
-
-plot(x = dataset[[1]] ,y = dataset[[7]], main = "Wald EDCP v. Wald p-value in Full Null Setting" , ylab = "Overall Wald DCPs"
-     , xlab = "Wald p-values", xlim = c(0,1), ylim = c(0,1))
-abline(a = 0, b = 1)
-
-plot(x = dataset[[2]] ,y = dataset[[8]], main = "Wald EDCP v. Wald p-value in Partial Null Setting" , ylab = "Overall Wald DCPs"
-     , xlab = "Wald p-values", xlim = c(0,1), ylim = c(0,1))
-abline(a = 0, b = 1)
-
-plot(x = dataset[[3]] ,y = dataset[[9]], main = "Score EDCP v. Score p-value in Full Null Setting" , ylab = "Overall Score DCPs"
-     , xlab = "Score p-values", xlim = c(0,1), ylim = c(0,1))
-abline(a = 0, b = 1)
-
-plot(x = dataset[[4]] ,y = dataset[[10]], main = "Score EDCP v. Score p-value in Partial Null Setting" , ylab = "Para. of Int. Score DCPs"
-     , xlab = "Score p-values", xlim = c(0,1), ylim = c(0,1))
-abline(a = 0, b = 1)
-
-mtext(maintitle, outer = TRUE, cex = 1.5)
-
-plot(x = dataset[[5]] ,y = dataset[[11]], main = "KL EDCP v. LRT p-value in Full Null Setting" , ylab = "Overall KL DCPs"
-     , xlab = "LRT p-values", xlim = c(0,1), ylim = c(0,1))
-abline(a = 0, b = 1)
-
-plot(x = dataset[[6]] ,y = dataset[[12]], main = "OKL EDCP v. LRT p-value in Partial Null Setting" , ylab = "Overall KL DCPs"
-     , xlab = "LRT p-values", xlim = c(0,1), ylim = c(0,1))
-abline(a = 0, b = 1)
-
-plot(x = dataset[[6]] ,y = dataset[[13]], main = "PIOKL EDCP v. LRT p-value in Partial Null Setting" , ylab = "Para. of Int. KL DCPs"
-     , xlab = "LRT p-values", xlim = c(0,1), ylim = c(0,1))
-abline(a = 0, b = 1)
-
-mtext(maintitle, outer = TRUE, cex = 1.5)
-
-}
-
-plotting.fxn(dataset = linregtest, maintitle = "Linear Regression Setting with True Null Hypothesis")
+# 
+# plotting.fxn <- function(dataset, maintitle){
+# 
+# par(mfrow = c(2,2), oma = c(0,0,3,0))
+# 
+# plot(x = dataset[[1]] ,y = dataset[[7]], main = "Wald EDCP v. Wald p-value in Full Null Setting" , ylab = "Overall Wald DCPs"
+#      , xlab = "Wald p-values", xlim = c(0,1), ylim = c(0,1))
+# abline(a = 0, b = 1)
+# 
+# plot(x = dataset[[2]] ,y = dataset[[8]], main = "Wald EDCP v. Wald p-value in Partial Null Setting" , ylab = "Overall Wald DCPs"
+#      , xlab = "Wald p-values", xlim = c(0,1), ylim = c(0,1))
+# abline(a = 0, b = 1)
+# 
+# plot(x = dataset[[3]] ,y = dataset[[9]], main = "Score EDCP v. Score p-value in Full Null Setting" , ylab = "Overall Score DCPs"
+#      , xlab = "Score p-values", xlim = c(0,1), ylim = c(0,1))
+# abline(a = 0, b = 1)
+# 
+# plot(x = dataset[[4]] ,y = dataset[[10]], main = "Score EDCP v. Score p-value in Partial Null Setting" , ylab = "Para. of Int. Score DCPs"
+#      , xlab = "Score p-values", xlim = c(0,1), ylim = c(0,1))
+# abline(a = 0, b = 1)
+# 
+# mtext(maintitle, outer = TRUE, cex = 1.5)
+# 
+# plot(x = dataset[[5]] ,y = dataset[[11]], main = "KL EDCP v. LRT p-value in Full Null Setting" , ylab = "Overall KL DCPs"
+#      , xlab = "LRT p-values", xlim = c(0,1), ylim = c(0,1))
+# abline(a = 0, b = 1)
+# 
+# plot(x = dataset[[6]] ,y = dataset[[12]], main = "OKL EDCP v. LRT p-value in Partial Null Setting" , ylab = "Overall KL DCPs"
+#      , xlab = "LRT p-values", xlim = c(0,1), ylim = c(0,1))
+# abline(a = 0, b = 1)
+# 
+# plot(x = dataset[[6]] ,y = dataset[[13]], main = "PIOKL EDCP v. LRT p-value in Partial Null Setting" , ylab = "Para. of Int. KL DCPs"
+#      , xlab = "LRT p-values", xlim = c(0,1), ylim = c(0,1))
+# abline(a = 0, b = 1)
+# 
+# mtext(maintitle, outer = TRUE, cex = 1.5)
+# 
+# }
+# 
+# plotting.fxn(dataset = linregtest, maintitle = "Linear Regression Setting with True Null Hypothesis")
 
